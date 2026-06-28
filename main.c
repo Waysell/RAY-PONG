@@ -25,18 +25,14 @@ static void UpdateDrawFrame(void);  // Update and Draw (one frame)
 int main(void)
 {
 
-
     InitWindow(800, 450, "Ray-Pong");
     SetTargetFPS(60);              
 
     InitGame();
 
-
     while (!WindowShouldClose()){
         
-
-
-
+        UpdateDrawFrame();
 
     }
     
@@ -59,7 +55,8 @@ void UpdateGame(){
 }
 // Draw game (one frame)
 void DrawGame(){
-
+    BeginDrawing();
+    EndDrawing();
 }
 
 // Update and Draw (one frame)
