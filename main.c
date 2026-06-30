@@ -1,4 +1,5 @@
 #include "raylib.h"
+#include <stdio.h>
 
 //----------------------------------------------------------------------------------
 // Some Defines
@@ -32,6 +33,14 @@ typedef struct Ball{
     Color color;
 } Ball;
 
+typedef struct Button{
+    Vector2 position;
+    Rectangle bounds;
+    Color color;
+
+} Button;
+
+typedef enum GameScreen { LOGO = 0, TITLE, GAMEPLAY, ENDING } GameScreen;
 //------------------------------------------------------------------------------------
 // Global Variables Declaration
 //------------------------------------------------------------------------------------
@@ -44,11 +53,16 @@ Block player2 = {0};
 
 Ball ball = {0};
 
+Button btn1p = {0};
+Button btn2p = {0};
+
+GameScreen currentScreen = LOGO;
+
 static int scoreP1 = 0;
 static int scoreP2 = 0;
 
 
-
+bool pause = false;
 bool gameEnds = false;
 bool onePlayer = false;
 
@@ -57,13 +71,23 @@ bool onePlayer = false;
 //------------------------------------------------------------------------------------
 // Module Functions Declaration (local)
 //------------------------------------------------------------------------------------
-static void InitGame(void);         // Initialize game
-static void initBlocks(Block*, float); //initialize players
+static void InitGame(void);             // Initialize game
+static void initBlock(Block* block, float posX);   //initialize player
+static void initBall(Ball* ball);     //initialize ball
+static void initButton(Button* button, float posY);
+
+static void DrawLogo(void);
+
+static void UpdateDrawTitle(void);
 
 static void UpdateGame(void);       // Update game (one frame)
 static void DrawGame(void);         // Draw game (one frame)
+
+static void UpdateEnding(void);
+static void DrawEnding(void);
+
 static void UnloadGame(void);       // Unload game
-static void UpdateDrawFrame(void);  // Update and Draw (one frame)
+//static void UpdateDrawFrame(void);  // Update and Draw (one frame)
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -74,11 +98,45 @@ int main(void)
     InitWindow(800, 450, "Ray-Pong");
     SetTargetFPS(60);              
 
+
+    int framesCounter = 0;
     InitGame();
 
     while (!WindowShouldClose()){
-        
-        UpdateDrawFrame();
+        switch (currentScreen)
+        {
+            case LOGO:
+            {
+                DrawLogo();
+                framesCounter++;    // Count frames
+ 
+                // Wait for 2 seconds (120 frames) before jumping to TITLE screen
+                if (framesCounter > 120)
+                {
+
+                    currentScreen = TITLE;
+                }
+            } break;
+            case TITLE:
+            {                
+                UpdateDrawTitle();
+            } break;
+            case GAMEPLAY:
+            {
+                
+
+                UpdateGame();
+                DrawGame();
+            } break;
+            case ENDING:
+            {
+                UpdateEnding();
+                DrawEnding();
+
+            } break;
+            default: break;
+        }
+
 
     }
     
@@ -92,15 +150,117 @@ int main(void)
 // Initialize game variables
 void InitGame(){
 
-    initBlocks(&player1, 30);
-    initBlocks(&player2, screenWidth-40);
-
-    
 
 
+
+    initBlock(&player1, 30);
+    initBlock(&player2, screenWidth-40);
+    initBall(&ball);
+
+    initButton(&btn1p, screenHeight/2);
+    initButton(&btn2p, screenHeight/2 + 64);
+  
 
 }
-void initBlocks(Block* block, float posX){
+
+
+void DrawLogo(){
+    BeginDrawing();
+
+    ClearBackground(LIGHTGRAY);
+    DrawText("WAYSELL", screenWidth/2 -100, screenHeight/2 -80, 50, BLACK);
+
+
+    EndDrawing();
+
+}
+
+
+void UpdateDrawTitle(){
+    BeginDrawing();
+
+    ClearBackground(BLACK);
+    //Draw title
+    DrawText("RAY-PONG", screenWidth/2 -100, screenHeight/2 -80, 40, WHITE);
+            
+    //Draw 1 player button
+    DrawRectangleV(btn1p.position, (Vector2){btn1p.bounds.width, btn1p.bounds.height}, WHITE);
+    DrawText("1 Player", btn1p.position.x+26, btn1p.position.y+9, 35, BLACK);
+
+    if (CheckCollisionPointRec(GetMousePosition(), btn1p.bounds))
+    {
+        DrawRectangleRec(btn1p.bounds, Fade(RED, 0.2f));
+        DrawRectangleLinesEx(btn1p.bounds, 3.0f, RED);
+        if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+            onePlayer = true;
+            currentScreen = GAMEPLAY;
+        }
+    }else{
+        DrawRectangleRec(btn1p.bounds, Fade(DARKGRAY, 0.2f));
+        DrawRectangleLinesEx(btn1p.bounds, 3.0f, DARKGRAY);
+    }  
+     
+
+    //Draw 2 player button
+    DrawRectangleV(btn2p.position, (Vector2){btn2p.bounds.width, btn2p.bounds.height}, WHITE);
+    DrawText("2 Player", btn2p.position.x+26, btn2p.position.y+9, 35, BLACK);
+
+    if (CheckCollisionPointRec(GetMousePosition(), btn2p.bounds))
+    {
+        DrawRectangleRec(btn2p.bounds, Fade(RED, 0.2f));
+        DrawRectangleLinesEx(btn2p.bounds, 3.0f, RED);
+        if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+            onePlayer = false;
+            currentScreen = GAMEPLAY;
+        }
+    }else{
+        DrawRectangleRec(btn2p.bounds, Fade(DARKGRAY, 0.2f));
+        DrawRectangleLinesEx(btn2p.bounds, 3.0f, DARKGRAY);
+    }
+
+    EndDrawing();
+}
+
+
+// Update game (one frame)
+void UpdateGame(){
+ 
+
+}
+// Draw game (one frame)
+void DrawGame(){
+    BeginDrawing();
+        ClearBackground(BLACK);
+        if(pause){
+            
+        }
+        else{
+            //Draw players
+            DrawRectangleV(player1.position, player1.size, player1.color);
+            DrawRectangleV(player2.position, player2.size, player2.color);
+
+            //Draw ball
+            DrawCircleV(ball.position, ball.radius, ball.color);
+
+            //Draw score
+            DrawText(TextFormat("%i - %i", scoreP1, scoreP2), screenWidth/2 -50, 10, 40, WHITE);
+        }
+
+        
+    EndDrawing();
+}
+
+void UpdateEnding(){
+
+}
+
+void DrawEnding(){
+
+}
+
+
+
+void initBlock(Block* block, float posX){
     block->position = (Vector2){posX, screenHeight/2 - BLOCK_HEIGHT/2};
 
     block->size = (Vector2){BLOCK_WIDTH, BLOCK_HEIGHT};
@@ -114,26 +274,17 @@ void initBlocks(Block* block, float posX){
     block->color = WHITE;
 
 }
+void initBall(Ball* ball){
+    ball->position = (Vector2){screenWidth/2, screenHeight/2};
 
+    ball->velocity = (Vector2){BALL_VELOCITY, BALL_VELOCITY};
 
-// Update game (one frame)
-void UpdateGame(){
+    ball->radius = BALL_RADIUS;
 
-
+    ball->color = WHITE;
 }
-// Draw game (one frame)
-void DrawGame(){
-    BeginDrawing();
-        ClearBackground(BLACK);
-        //DrawRectangle(screenWidth/2, 0, screenWidth/2, screenHeight, WHITE);
-
-        DrawRectangleV(player1.position, player1.size, player1.color);
-        DrawRectangleV(player2.position, player2.size, player2.color);
-    EndDrawing();
-}
-
-// Update and Draw (one frame)
-void UpdateDrawFrame(){
-    UpdateGame();
-    DrawGame();
+void initButton(Button* button, float posY){
+    button->position = (Vector2) {screenWidth/2-88, posY};
+    button->bounds = (Rectangle){screenWidth/2-88, posY, 192, 48};
+    button->color = (Color) WHITE;
 }
