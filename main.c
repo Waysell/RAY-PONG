@@ -1,4 +1,5 @@
 #include "raylib.h"
+#include "raymath.h"
 #include <stdio.h>
 
 //----------------------------------------------------------------------------------
@@ -10,8 +11,8 @@
 
 
 
-#define BALL_VELOCITY   5.0f       
-#define BALL_RADIUS     10
+#define BALL_VELOCITY   3.0f       
+#define BALL_RADIUS     15
 
 
 //----------------------------------------------------------------------------------
@@ -82,12 +83,12 @@ static void UpdateDrawTitle(void);
 
 static void UpdateGame(void);       // Update game (one frame)
 static void DrawGame(void);         // Draw game (one frame)
+static void reflectBall(Block* player);
 
-static void UpdateEnding(void);
+static void UpdateEnding(void);     
 static void DrawEnding(void);
 
-static void UnloadGame(void);       // Unload game
-//static void UpdateDrawFrame(void);  // Update and Draw (one frame)
+
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -224,7 +225,57 @@ void UpdateDrawTitle(){
 
 // Update game (one frame)
 void UpdateGame(){
+    if(IsKeyDown(KEY_W) && player1.position.y >= 0) player1.position.y -= player1.velocity;
+    if(IsKeyDown(KEY_S) && player1.position.y <= screenHeight - player1.size.y) player1.position.y += player1.velocity;
+
+    player1.hitbox.y = player1.position.y;
+    player2.hitbox.y = player2.position.y;
+
+    if(onePlayer){
+
+    }
+    else{
+
+    if(IsKeyDown(KEY_UP) && player2.position.y >= 0) player2.position.y -= player2.velocity;
+    if(IsKeyDown(KEY_DOWN) && player2.position.y <= screenHeight - player2.size.y) player2.position.y += player2.velocity;
+
+    }
+
+    ball.position.x += ball.velocity.x;
+    ball.position.y += ball.velocity.y;
+
+    if(ball.position.y >= screenHeight - ball.radius || ball.position.y <= ball.radius) ball.velocity.y *= -1;
+
+    bool isBallCollidingPlayer1 = CheckCollisionCircleRec(ball.position, ball.radius, player1.hitbox);
+    bool isBallCollidingPlayer2 = CheckCollisionCircleRec(ball.position, ball.radius, player2.hitbox);
+
+
+    if(isBallCollidingPlayer1){
+        reflectBall(&player1); 
+    }
+    else if(isBallCollidingPlayer2){
+        reflectBall(&player2);
+
+    }
+    printf("Ball vx: %f, Ball vy: %f\n", ball.velocity.x, ball.velocity.y);
  
+
+}
+void reflectBall(Block* player){
+    Vector2 clamped = Vector2Clamp(ball.position,
+                        (Vector2){player->position.x, player->position.y}, 
+                        (Vector2){player->position.x+ player->hitbox.width, player->position.y+ player->hitbox.height});
+    
+    Vector2 normalDir = Vector2Subtract(ball.position, clamped);
+
+    if (Vector2LengthSqr(normalDir) > 0.001f) {
+        Vector2 normal = Vector2Normalize(normalDir);
+        ball.velocity = Vector2Reflect(ball.velocity, normal);
+    } else {
+        ball.velocity.x *= -1.0f;
+    }
+    
+
 
 }
 // Draw game (one frame)
@@ -267,8 +318,8 @@ void initBlock(Block* block, float posX){
 
     block->hitbox = (Rectangle){block->position.x, 
                                 block->position.y, 
-                                block->position.x+ block->size.x, 
-                                block->position.y+ block->size.y};
+                                block->size.x, 
+                                block->size.y};
     block->velocity = BLOCK_VELOCITY;
     
     block->color = WHITE;
