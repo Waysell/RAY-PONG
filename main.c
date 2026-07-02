@@ -12,7 +12,7 @@
 
 
 #define BALL_VELOCITY   3.0f       
-#define BALL_RADIUS     15
+#define BALL_RADIUS     10
 
 
 //----------------------------------------------------------------------------------
@@ -31,6 +31,7 @@ typedef struct Ball{
     Vector2 position;
     Vector2 velocity;
     int radius;
+    int bounceCount;
     Color color;
 } Ball;
 
@@ -66,7 +67,9 @@ static int scoreP2 = 0;
 bool pause = false;
 bool gameEnds = false;
 bool onePlayer = false;
-
+int framesCounter = 0;
+int scoreTimer = 0;
+float scoreLinePosX = 0;
 
 
 //------------------------------------------------------------------------------------
@@ -83,7 +86,10 @@ static void UpdateDrawTitle(void);
 
 static void UpdateGame(void);       // Update game (one frame)
 static void DrawGame(void);         // Draw game (one frame)
-static void reflectBall(Block* player);
+static void reflectBallFromPlayer(Block* player);
+static void reflectBallFromEdge();
+static void speedUpBall();
+static void resetBallPos();
 
 static void UpdateEnding(void);     
 static void DrawEnding(void);
@@ -100,7 +106,7 @@ int main(void)
     SetTargetFPS(60);              
 
 
-    int framesCounter = 0;
+    framesCounter = 0;
     InitGame();
 
     while (!WindowShouldClose()){
@@ -116,6 +122,7 @@ int main(void)
                 {
 
                     currentScreen = TITLE;
+                    framesCounter = 0;
                 }
             } break;
             case TITLE:
@@ -232,36 +239,61 @@ void UpdateGame(){
     player2.hitbox.y = player2.position.y;
 
     if(onePlayer){
-
+        if((ball.position.y > player2.position.y +  player2.hitbox.height/2) && player2.position.y <= screenHeight - player2.size.y){
+            player2.position.y += player2.velocity;
+        }
+        else if(ball.position.y < player2.position.y +  player2.hitbox.height/2 && (player2.position.y >= 0)){
+            player2.position.y -= player2.velocity;
+        }
     }
     else{
 
-    if(IsKeyDown(KEY_UP) && player2.position.y >= 0) player2.position.y -= player2.velocity;
-    if(IsKeyDown(KEY_DOWN) && player2.position.y <= screenHeight - player2.size.y) player2.position.y += player2.velocity;
+        if(IsKeyDown(KEY_UP) && player2.position.y >= 0) player2.position.y -= player2.velocity;
+        if(IsKeyDown(KEY_DOWN) && player2.position.y <= screenHeight - player2.size.y) player2.position.y += player2.velocity;
 
     }
 
-    ball.position.x += ball.velocity.x;
-    ball.position.y += ball.velocity.y;
+    if( scoreTimer <= 0){
 
-    if(ball.position.y >= screenHeight - ball.radius || ball.position.y <= ball.radius) ball.velocity.y *= -1;
+        ball.position.x += ball.velocity.x;
+        ball.position.y += ball.velocity.y;
+    }
 
-    bool isBallCollidingPlayer1 = CheckCollisionCircleRec(ball.position, ball.radius, player1.hitbox);
+
+        
+    
     bool isBallCollidingPlayer2 = CheckCollisionCircleRec(ball.position, ball.radius, player2.hitbox);
+    bool isBallCollidingPlayer1 = CheckCollisionCircleRec(ball.position, ball.radius, player1.hitbox);
+    bool isBallCollidingEdge = ball.position.y >= screenHeight - ball.radius || ball.position.y <= ball.radius;
 
 
-    if(isBallCollidingPlayer1){
-        reflectBall(&player1); 
+    if(isBallCollidingPlayer1)reflectBallFromPlayer(&player1); 
+    else if(isBallCollidingPlayer2)reflectBallFromPlayer(&player2);
+
+    if(isBallCollidingEdge) reflectBallFromEdge();
+    
+    if(ball.bounceCount >= 5){
+        speedUpBall();
+        ball.bounceCount = 0;
     }
-    else if(isBallCollidingPlayer2){
-        reflectBall(&player2);
-
+    
+    if(ball.position.x - ball.radius <= 0) {
+        scoreP2 ++; 
+        scoreLinePosX = 0;
+        resetBallPos();
     }
-    printf("Ball vx: %f, Ball vy: %f\n", ball.velocity.x, ball.velocity.y);
- 
+    else if(ball.position.x + ball.radius >= screenWidth) {
+        scoreP1 ++; 
+        scoreLinePosX = screenWidth;
+        resetBallPos();
+    }
+
+    if(scoreP1 == 10 || scoreP2 == 10){
+        currentScreen = ENDING;
+    }
 
 }
-void reflectBall(Block* player){
+void reflectBallFromPlayer(Block* player){
     Vector2 clamped = Vector2Clamp(ball.position,
                         (Vector2){player->position.x, player->position.y}, 
                         (Vector2){player->position.x+ player->hitbox.width, player->position.y+ player->hitbox.height});
@@ -274,10 +306,29 @@ void reflectBall(Block* player){
     } else {
         ball.velocity.x *= -1.0f;
     }
-    
+    ball.bounceCount++;
 
 
 }
+void reflectBallFromEdge(){
+    ball.velocity.y *= -1;
+    ball.bounceCount ++; 
+}
+void speedUpBall(){
+    
+    ball.velocity.x += 0.5f * ball.velocity.x / fabsf(ball.velocity.x);
+    ball.velocity.y += 0.5f * ball.velocity.y / fabsf(ball.velocity.y);
+    printf("Ball vx: %f, Ball vy: %f\n", ball.velocity.x, ball.velocity.y);
+
+    
+}
+void resetBallPos(){
+    scoreTimer = 60;
+    ball.position = (Vector2){screenWidth/2, screenHeight/2};
+    ball.velocity = (Vector2){BALL_VELOCITY, BALL_VELOCITY};
+
+}
+
 // Draw game (one frame)
 void DrawGame(){
     BeginDrawing();
@@ -297,7 +348,10 @@ void DrawGame(){
             DrawText(TextFormat("%i - %i", scoreP1, scoreP2), screenWidth/2 -50, 10, 40, WHITE);
         }
 
-        
+        if(scoreTimer > 0) {
+            scoreTimer--;
+            DrawLineEx((Vector2){scoreLinePosX, 0}, (Vector2){scoreLinePosX, screenHeight}, 10.0, RED);
+        }
     EndDrawing();
 }
 
@@ -306,7 +360,17 @@ void UpdateEnding(){
 }
 
 void DrawEnding(){
+    BeginDrawing();
 
+    ClearBackground(BLACK);
+    if(scoreP1 == 10){
+        DrawText("PLAYER 1 WINS", screenWidth/2, screenHeight/2, 40, WHITE);
+    }
+    else{
+        DrawText("PLAYER 2 WINS", screenWidth/2, screenHeight/2, 40, WHITE);
+
+    }
+    EndDrawing();
 }
 
 
@@ -332,6 +396,8 @@ void initBall(Ball* ball){
 
     ball->radius = BALL_RADIUS;
 
+    ball->bounceCount = 0;
+    
     ball->color = WHITE;
 }
 void initButton(Button* button, float posY){
