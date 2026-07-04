@@ -1,32 +1,32 @@
 # Ray-Pong
 
-A lightweight, 2D implementation of the classic Pong game, built from scratch in **C** using the **Raylib** library[cite: 1].
+A lightweight, 2D implementation of the classic Pong game, built from scratch in **C** using the **Raylib** library
 
 ## Features
-*   **Game Modes:** Play against a friend (2-player) or challenge the AI (1-player)[cite: 1].
-*   **Menu System:** Intuitive main menu to select game modes[cite: 1].
-*   **Dynamic Gameplay:** Includes score tracking, ball speed acceleration, and win/loss states[cite: 1].
-*   **Simple Controls:** Easy-to-use keyboard inputs for both players[cite: 1].
+*   **Game Modes:** Play against a friend (2-player) or challenge the AI (1-player)
+*   **Menu System:** Intuitive main menu to select game modes.
+*   **Dynamic Gameplay:** Includes score tracking, ball speed acceleration, and win/loss states.
+*   **Simple Controls:** Easy-to-use keyboard inputs for both players.
 
 ## Prerequisites
-To compile and run this game, you need the **Raylib** library installed on your system[cite: 1, 2].
+To compile and run this game, you need the **Raylib** library installed on your system.
 
 ## Controls
-*   **Player 1:** `W` (Up) / `S` (Down)[cite: 1]
-*   **Player 2:** `Up Arrow` / `Down Arrow`[cite: 1]
+*   **Player 1:** `W` (Up) / `S` (Down)
+*   **Player 2:** `Up Arrow` / `Down Arrow`
 *   **Game Management:** 
-    *   `R` to restart during the ending screen[cite: 1]
-    *   `M` to return to the main menu[cite: 1]
+    *   `R` to restart during the ending screen
+    *   `M` to return to the main menu
 
 ## How to Build and Run
-This project includes a `Makefile` for easy compilation[cite: 2].
+This project includes a `Makefile` for easy compilation.
 
 1. **Clone the repository** and navigate to the project folder.
 2. **Build the game:**
    ```bash
    make build
    ```
-   *Note: This command uses the default Linux configuration in the Makefile[cite: 2].*
+   *Note: This command uses the default Linux configuration in the Makefile.*
 3. **Run the game:**
    ```bash
    make run
@@ -37,4 +37,4 @@ This project includes a `Makefile` for easy compilation[cite: 2].
    ```
 
 ### Note for Non-Linux Users
-The provided `Makefile` is configured for Linux by default[cite: 2]. If you are on **Windows (MinGW)** or **macOS**, open the `Makefile` in a text editor and uncomment the appropriate `LDFLAGS` line for your operating system, while commenting out the Linux line[cite: 2].
+The provided `Makefile` is configured for Linux by default. If you are on **Windows (MinGW)** or **macOS**, open the `Makefile` in a text editor and uncomment the appropriate `LDFLAGS` line for your operating system, while commenting out the Linux line.
