@@ -60,24 +60,27 @@ Button btn2p = {0};
 
 GameScreen currentScreen = LOGO;
 
-static int scoreP1 = 9;
+static int scoreP1 = 0;
 static int scoreP2 = 0;
 
 
-bool pause = false;
-bool gameEnds = false;
-bool onePlayer = false;
+static bool pause = false;
+static bool gameEnds = false;
+static bool onePlayer = false;
 
-int framesCounter = 0;
-int scoreTimer = 0;
-float scoreLinePosX = 0;
+static int framesCounter = 0;
+static int scoreTimer = 0;
+static float scoreLinePosX = 0;
 
-int logoTextWidth = 0;
-int titleTextWidth = 0;
-int btn1pTextWidth = 0;
-int btn2pTextWidth = 0;
-int winp1TextWidth = 0;
-int winp2TextWidth = 0;
+static int logoTextWidth = 0;
+static int titleTextWidth = 0;
+static int btn1pTextWidth = 0;
+static int btn2pTextWidth = 0;
+static int winp1TextWidth = 0;
+static int winp2TextWidth = 0;
+static int restartTextWidth = 0;
+static int backToMenuTextWidth = 0;
+
 
 //------------------------------------------------------------------------------------
 // Module Functions Declaration (local)
@@ -112,9 +115,17 @@ static void DrawEnding(void);
 int main(void)
 {
 
-    InitWindow(800, 450, "Ray-Pong");
+    InitWindow(screenWidth, screenHeight, "Ray-Pong");
     SetTargetFPS(60);              
 
+    logoTextWidth = MeasureText("WAYSELL", 50);
+    titleTextWidth = MeasureText("RAY-PONG", 40);
+    btn1pTextWidth = MeasureText("1 Player", 35);
+    btn2pTextWidth = MeasureText("2 Player", 35);
+    winp1TextWidth = MeasureText("PLAYER 1 WON", 40);
+    winp2TextWidth = MeasureText("PLAYER 2 WON", 40);
+    restartTextWidth = MeasureText("Press [R] to play again", 30);
+    backToMenuTextWidth = MeasureText("Press [M] to go back to main menu", 30);
 
     framesCounter = 0;
     InitGame();
@@ -168,14 +179,12 @@ int main(void)
 // Initialize game variables
 void InitGame(){
 
-    logoTextWidth = MeasureText("WAYSELL", 50);
-    titleTextWidth = MeasureText("RAY-PONG", 40);
-    btn1pTextWidth = MeasureText("1 Player", 35);
-    btn2pTextWidth = MeasureText("2 Player", 35);
-    winp1TextWidth = MeasureText("PLAYER 1 WON", 40);
-    winp2TextWidth = MeasureText("PLAYER 2 WON", 40);
+    
 
-
+    scoreP1 = 9;
+    scoreP2 = 9;
+    pause = false;
+    gameEnds = false;
 
     initBlock(&player1, 30);
     initBlock(&player2, screenWidth-40);
@@ -246,7 +255,6 @@ void outlineButton(Button* btn){
 
 // Update game (one frame)
 void UpdateGame(){
-    
     updatePlayerVelocity(KEY_W, KEY_S, &player1);
 
     if(onePlayer) moveBot();
@@ -374,7 +382,14 @@ void DrawGame(){
 }
 
 void UpdateEnding(){
-
+    if(IsKeyDown(KEY_R)){
+        currentScreen = GAMEPLAY;
+        InitGame();
+    }
+    if(IsKeyDown(KEY_M)){
+        currentScreen = TITLE;
+        InitGame();
+    }
 }
 
 void DrawEnding(){
@@ -382,12 +397,16 @@ void DrawEnding(){
 
     ClearBackground(BLACK);
     if(scoreP1 == 10){
-        DrawText("PLAYER 1 WINS", screenWidth/2 - winp1TextWidth/2, screenHeight/2 - 20, 40, WHITE);
+        DrawText("PLAYER 1 WINS", screenWidth/2 - winp1TextWidth/2, screenHeight/2 - 80, 40, WHITE);
     }
     else{
-        DrawText("PLAYER 2 WINS", screenWidth/2 - winp2TextWidth/2, screenHeight/2 - 20, 40, WHITE);
-
+        DrawText("PLAYER 2 WINS", screenWidth/2 - winp2TextWidth/2, screenHeight/2 - 80, 40, WHITE);
     }
+
+    DrawText("Press [R] to play again", screenWidth/2 - restartTextWidth/2, screenHeight/2 + 40, 30, LIGHTGRAY);
+    DrawText("Press [M] to go back to main menu", screenWidth/2 - backToMenuTextWidth/2, screenHeight/2 + 80, 30, LIGHTGRAY);
+
+
     EndDrawing();
 }
 
