@@ -26,7 +26,6 @@ This project includes a `Makefile` for easy compilation.
    ```bash
    make build
    ```
-   *Note: This command uses the default Linux configuration in the Makefile.*
 3. **Run the game:**
    ```bash
    make run
@@ -35,6 +34,3 @@ This project includes a `Makefile` for easy compilation.
    ```bash
    make clean
    ```
-
-### Note for Non-Linux Users
-The provided `Makefile` is configured for Linux by default. If you are on **Windows (MinGW)** or **macOS**, open the `Makefile` in a text editor and uncomment the appropriate `LDFLAGS` line for your operating system, while commenting out the Linux line.
