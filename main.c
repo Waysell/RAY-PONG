@@ -60,17 +60,24 @@ Button btn2p = {0};
 
 GameScreen currentScreen = LOGO;
 
-static int scoreP1 = 0;
+static int scoreP1 = 9;
 static int scoreP2 = 0;
 
 
 bool pause = false;
 bool gameEnds = false;
 bool onePlayer = false;
+
 int framesCounter = 0;
 int scoreTimer = 0;
 float scoreLinePosX = 0;
 
+int logoTextWidth = 0;
+int titleTextWidth = 0;
+int btn1pTextWidth = 0;
+int btn2pTextWidth = 0;
+int winp1TextWidth = 0;
+int winp2TextWidth = 0;
 
 //------------------------------------------------------------------------------------
 // Module Functions Declaration (local)
@@ -83,9 +90,12 @@ static void initButton(Button* button, float posY);
 static void DrawLogo(void);
 
 static void UpdateDrawTitle(void);
+static void outlineButton(Button* btn);
 
 static void UpdateGame(void);       // Update game (one frame)
 static void DrawGame(void);         // Draw game (one frame)
+static void updatePlayerVelocity(int buttonUp, int buttonDown, Block* player);
+static void moveBot();
 static void reflectBallFromPlayer(Block* player);
 static void reflectBallFromEdge();
 static void speedUpBall();
@@ -158,6 +168,12 @@ int main(void)
 // Initialize game variables
 void InitGame(){
 
+    logoTextWidth = MeasureText("WAYSELL", 50);
+    titleTextWidth = MeasureText("RAY-PONG", 40);
+    btn1pTextWidth = MeasureText("1 Player", 35);
+    btn2pTextWidth = MeasureText("2 Player", 35);
+    winp1TextWidth = MeasureText("PLAYER 1 WON", 40);
+    winp2TextWidth = MeasureText("PLAYER 2 WON", 40);
 
 
 
@@ -167,6 +183,7 @@ void InitGame(){
 
     initButton(&btn1p, screenHeight/2);
     initButton(&btn2p, screenHeight/2 + 64);
+
   
 
 }
@@ -176,7 +193,8 @@ void DrawLogo(){
     BeginDrawing();
 
     ClearBackground(LIGHTGRAY);
-    DrawText("WAYSELL", screenWidth/2 -100, screenHeight/2 -80, 50, BLACK);
+
+    DrawText("WAYSELL", screenWidth/2 - logoTextWidth/2, screenHeight/2 -25, 50, BLACK);
 
 
     EndDrawing();
@@ -189,78 +207,56 @@ void UpdateDrawTitle(){
 
     ClearBackground(BLACK);
     //Draw title
-    DrawText("RAY-PONG", screenWidth/2 -100, screenHeight/2 -80, 40, WHITE);
+
+    DrawText("RAY-PONG", screenWidth/2 -titleTextWidth/2, screenHeight/2 -80, 40, WHITE);
             
     //Draw 1 player button
     DrawRectangleV(btn1p.position, (Vector2){btn1p.bounds.width, btn1p.bounds.height}, WHITE);
-    DrawText("1 Player", btn1p.position.x+26, btn1p.position.y+9, 35, BLACK);
-
-    if (CheckCollisionPointRec(GetMousePosition(), btn1p.bounds))
-    {
-        DrawRectangleRec(btn1p.bounds, Fade(RED, 0.2f));
-        DrawRectangleLinesEx(btn1p.bounds, 3.0f, RED);
-        if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
-            onePlayer = true;
-            currentScreen = GAMEPLAY;
-        }
-    }else{
-        DrawRectangleRec(btn1p.bounds, Fade(DARKGRAY, 0.2f));
-        DrawRectangleLinesEx(btn1p.bounds, 3.0f, DARKGRAY);
-    }  
-     
+    DrawText("1 Player", screenWidth/2 - btn1pTextWidth/2, btn1p.position.y+6, 35, BLACK);
+    outlineButton(&btn1p);
+    
 
     //Draw 2 player button
     DrawRectangleV(btn2p.position, (Vector2){btn2p.bounds.width, btn2p.bounds.height}, WHITE);
-    DrawText("2 Player", btn2p.position.x+26, btn2p.position.y+9, 35, BLACK);
-
-    if (CheckCollisionPointRec(GetMousePosition(), btn2p.bounds))
-    {
-        DrawRectangleRec(btn2p.bounds, Fade(RED, 0.2f));
-        DrawRectangleLinesEx(btn2p.bounds, 3.0f, RED);
-        if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
-            onePlayer = false;
-            currentScreen = GAMEPLAY;
-        }
-    }else{
-        DrawRectangleRec(btn2p.bounds, Fade(DARKGRAY, 0.2f));
-        DrawRectangleLinesEx(btn2p.bounds, 3.0f, DARKGRAY);
-    }
+    DrawText("2 Player", screenWidth/2 - btn2pTextWidth/2, btn2p.position.y+6, 35, BLACK);
+    outlineButton(&btn2p);
+    
 
     EndDrawing();
 }
+void outlineButton(Button* btn){
+    if (CheckCollisionPointRec(GetMousePosition(), btn->bounds))
+    {
+        DrawRectangleRec(btn->bounds, Fade(RED, 0.2f));
+        DrawRectangleLinesEx(btn->bounds, 3.0f, RED);
+
+        if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+            onePlayer = btn == &btn1p;      //is user clicked for 1 player option
+            currentScreen = GAMEPLAY;
+        }
+    }else{
+        DrawRectangleRec(btn->bounds, Fade(DARKGRAY, 0.2f));
+        DrawRectangleLinesEx(btn->bounds, 3.0f, DARKGRAY);
+    }
+
+
+}
+
 
 
 // Update game (one frame)
 void UpdateGame(){
-    if(IsKeyDown(KEY_W) && player1.position.y >= 0) player1.position.y -= player1.velocity;
-    if(IsKeyDown(KEY_S) && player1.position.y <= screenHeight - player1.size.y) player1.position.y += player1.velocity;
+    
+    updatePlayerVelocity(KEY_W, KEY_S, &player1);
 
-    player1.hitbox.y = player1.position.y;
-    player2.hitbox.y = player2.position.y;
-
-    if(onePlayer){
-        if((ball.position.y > player2.position.y +  player2.hitbox.height/2) && player2.position.y <= screenHeight - player2.size.y){
-            player2.position.y += player2.velocity;
-        }
-        else if(ball.position.y < player2.position.y +  player2.hitbox.height/2 && (player2.position.y >= 0)){
-            player2.position.y -= player2.velocity;
-        }
-    }
-    else{
-
-        if(IsKeyDown(KEY_UP) && player2.position.y >= 0) player2.position.y -= player2.velocity;
-        if(IsKeyDown(KEY_DOWN) && player2.position.y <= screenHeight - player2.size.y) player2.position.y += player2.velocity;
-
-    }
+    if(onePlayer) moveBot();
+    else updatePlayerVelocity(KEY_UP, KEY_DOWN, &player2);
 
     if( scoreTimer <= 0){
-
         ball.position.x += ball.velocity.x;
         ball.position.y += ball.velocity.y;
     }
 
-
-        
     
     bool isBallCollidingPlayer2 = CheckCollisionCircleRec(ball.position, ball.radius, player2.hitbox);
     bool isBallCollidingPlayer1 = CheckCollisionCircleRec(ball.position, ball.radius, player1.hitbox);
@@ -293,6 +289,27 @@ void UpdateGame(){
     }
 
 }
+void updatePlayerVelocity(int buttonUp, int buttonDown, Block* player){
+    if(IsKeyDown(buttonUp) && player->position.y >= 0){
+        player->position.y -= player->velocity;
+    } 
+    else if(IsKeyDown(buttonDown) && player->position.y <= screenHeight - player->size.y){
+        player->position.y += player->velocity;
+    } 
+    player->hitbox.y = player->position.y;
+
+}
+void moveBot(){
+    if((ball.position.y > player2.position.y +  player2.hitbox.height/2) && player2.position.y <= screenHeight - player2.size.y){
+        player2.position.y += player2.velocity;
+    }
+    else if(ball.position.y < player2.position.y +  player2.hitbox.height/2 && (player2.position.y >= 0)){
+        player2.position.y -= player2.velocity;
+    }
+
+    player2.hitbox.y = player2.position.y;
+
+}
 void reflectBallFromPlayer(Block* player){
     Vector2 clamped = Vector2Clamp(ball.position,
                         (Vector2){player->position.x, player->position.y}, 
@@ -318,7 +335,7 @@ void speedUpBall(){
     
     ball.velocity.x += 0.5f * ball.velocity.x / fabsf(ball.velocity.x);
     ball.velocity.y += 0.5f * ball.velocity.y / fabsf(ball.velocity.y);
-    printf("Ball vx: %f, Ball vy: %f\n", ball.velocity.x, ball.velocity.y);
+    //printf("Ball vx: %f, Ball vy: %f\n", ball.velocity.x, ball.velocity.y);
 
     
 }
@@ -345,7 +362,8 @@ void DrawGame(){
             DrawCircleV(ball.position, ball.radius, ball.color);
 
             //Draw score
-            DrawText(TextFormat("%i - %i", scoreP1, scoreP2), screenWidth/2 -50, 10, 40, WHITE);
+            int scoreTextWidth = MeasureText(TextFormat("%i - %i", scoreP1, scoreP2), 40);
+            DrawText(TextFormat("%i - %i", scoreP1, scoreP2), screenWidth/2 - scoreTextWidth/2, 10, 40, WHITE);
         }
 
         if(scoreTimer > 0) {
@@ -364,10 +382,10 @@ void DrawEnding(){
 
     ClearBackground(BLACK);
     if(scoreP1 == 10){
-        DrawText("PLAYER 1 WINS", screenWidth/2, screenHeight/2, 40, WHITE);
+        DrawText("PLAYER 1 WINS", screenWidth/2 - winp1TextWidth/2, screenHeight/2 - 20, 40, WHITE);
     }
     else{
-        DrawText("PLAYER 2 WINS", screenWidth/2, screenHeight/2, 40, WHITE);
+        DrawText("PLAYER 2 WINS", screenWidth/2 - winp2TextWidth/2, screenHeight/2 - 20, 40, WHITE);
 
     }
     EndDrawing();
@@ -401,7 +419,7 @@ void initBall(Ball* ball){
     ball->color = WHITE;
 }
 void initButton(Button* button, float posY){
-    button->position = (Vector2) {screenWidth/2-88, posY};
-    button->bounds = (Rectangle){screenWidth/2-88, posY, 192, 48};
+    button->position = (Vector2) {screenWidth/2 - 96, posY};
+    button->bounds = (Rectangle){screenWidth/2 - 96, posY, 192, 48};
     button->color = (Color) WHITE;
 }
