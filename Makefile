@@ -1,35 +1,29 @@
-# Compiler
 CC = gcc
-
-# Compiler flags
 CFLAGS = -Wall -Wextra -g
-
-# --- OS-SPECIFIC LINKER FLAGS ---
-# DEFAULT: Linux Linker Flags
-LDFLAGS = -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
-
-# WINDOWS (MinGW): Uncomment the line below and comment out the Linux line above
-# LDFLAGS = -lraylib -lopengl32 -lgdi32 -lwinmm
-
-# MACOS: Uncomment the line below and comment out the Linux line above
-# LDFLAGS = -framework CoreVideo -framework IOKit -framework Cocoa -framework GLUT -framework OpenGL -lraylib
-# ---------------------------------
-
-# Source files and output name
 SRC = main.c
 TARGET = ray_pong
 
-# Default target
+# Auto-detect OS
+UNAME_S := $(shell uname -s)
+
+ifeq ($(UNAME_S),Linux)
+    LDFLAGS = -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
+else ifeq ($(UNAME_S),Darwin)
+    LDFLAGS = -framework CoreVideo -framework IOKit -framework Cocoa -framework GLUT -framework OpenGL -lraylib
+else
+    # Fallback for Windows
+    LDFLAGS = -lraylib -lopengl32 -lgdi32 -lwinmm
+endif
+
+.PHONY: all build run clean
+
 all: build run
 
-# Compile the game
 build:
 	$(CC) $(CFLAGS) $(SRC) -o $(TARGET) $(LDFLAGS)
 
-# Run the game
 run:
 	./$(TARGET)
 
-# Clean up
 clean:
 	rm -f $(TARGET)
