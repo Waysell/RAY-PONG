@@ -2,11 +2,7 @@
 
 A lightweight, 2D implementation of the classic Pong game, built from scratch in **C** using the **Raylib** library
 
-
-<p align="center">
-  <video src="/assets/gameplay.gif" autoplay loop muted width="800"></video>
-</p>
-
+![Ray-Pong Gameplay](./assets/gameplay.gif)
 
 
 ## Features
