@@ -65,7 +65,6 @@ static int scoreP2 = 0;
 
 
 static bool pause = false;
-static bool gameEnds = false;
 static bool onePlayer = false;
 
 static int framesCounter = 0;
@@ -76,11 +75,11 @@ static int logoTextWidth = 0;
 static int titleTextWidth = 0;
 static int btn1pTextWidth = 0;
 static int btn2pTextWidth = 0;
+static int pausedTextWidth = 0;
 static int winp1TextWidth = 0;
 static int winp2TextWidth = 0;
 static int restartTextWidth = 0;
 static int backToMenuTextWidth = 0;
-
 
 //------------------------------------------------------------------------------------
 // Module Functions Declaration (local)
@@ -122,6 +121,7 @@ int main(void)
     titleTextWidth = MeasureText("RAY-PONG", 40);
     btn1pTextWidth = MeasureText("1 Player", 35);
     btn2pTextWidth = MeasureText("2 Player", 35);
+    pausedTextWidth = MeasureText("PAUSED", 40);
     winp1TextWidth = MeasureText("PLAYER 1 WON", 40);
     winp2TextWidth = MeasureText("PLAYER 2 WON", 40);
     restartTextWidth = MeasureText("Press [R] to play again", 30);
@@ -184,7 +184,6 @@ void InitGame(){
     scoreP1 = 0;
     scoreP2 = 0;
     pause = false;
-    gameEnds = false;
 
     initBlock(&player1, 30);
     initBlock(&player2, screenWidth-40);
@@ -255,45 +254,48 @@ void outlineButton(Button* btn){
 
 // Update game (one frame)
 void UpdateGame(){
-    updatePlayerVelocity(KEY_W, KEY_S, &player1);
+    if(IsKeyPressed(KEY_P)) pause = !pause;
+    if(!pause){
+        updatePlayerVelocity(KEY_W, KEY_S, &player1);
 
-    if(onePlayer) moveBot();
-    else updatePlayerVelocity(KEY_UP, KEY_DOWN, &player2);
+        if(onePlayer) moveBot();
+        else updatePlayerVelocity(KEY_UP, KEY_DOWN, &player2);
 
-    if( scoreTimer <= 0){
-        ball.position.x += ball.velocity.x;
-        ball.position.y += ball.velocity.y;
-    }
-
-    
-    bool isBallCollidingPlayer2 = CheckCollisionCircleRec(ball.position, ball.radius, player2.hitbox);
-    bool isBallCollidingPlayer1 = CheckCollisionCircleRec(ball.position, ball.radius, player1.hitbox);
-    bool isBallCollidingEdge = ball.position.y >= screenHeight - ball.radius || ball.position.y <= ball.radius;
+        if( scoreTimer <= 0){
+            ball.position.x += ball.velocity.x;
+            ball.position.y += ball.velocity.y;
+        }
 
 
-    if(isBallCollidingPlayer1)reflectBallFromPlayer(&player1); 
-    else if(isBallCollidingPlayer2)reflectBallFromPlayer(&player2);
+        bool isBallCollidingPlayer2 = CheckCollisionCircleRec(ball.position, ball.radius, player2.hitbox);
+        bool isBallCollidingPlayer1 = CheckCollisionCircleRec(ball.position, ball.radius, player1.hitbox);
+        bool isBallCollidingEdge = ball.position.y >= screenHeight - ball.radius || ball.position.y <= ball.radius;
 
-    if(isBallCollidingEdge) reflectBallFromEdge();
-    
-    if(ball.bounceCount >= 5){
-        speedUpBall();
-        ball.bounceCount = 0;
-    }
-    
-    if(ball.position.x - ball.radius <= 0) {
-        scoreP2 ++; 
-        scoreLinePosX = 0;
-        resetBallPos();
-    }
-    else if(ball.position.x + ball.radius >= screenWidth) {
-        scoreP1 ++; 
-        scoreLinePosX = screenWidth;
-        resetBallPos();
-    }
 
-    if(scoreP1 == 10 || scoreP2 == 10){
-        currentScreen = ENDING;
+        if(isBallCollidingPlayer1)reflectBallFromPlayer(&player1); 
+        else if(isBallCollidingPlayer2)reflectBallFromPlayer(&player2);
+
+        if(isBallCollidingEdge) reflectBallFromEdge();
+
+        if(ball.bounceCount >= 5){
+            speedUpBall();
+            ball.bounceCount = 0;
+        }
+
+        if(ball.position.x - ball.radius <= 0) {
+            scoreP2 ++; 
+            scoreLinePosX = 0;
+            resetBallPos();
+        }
+        else if(ball.position.x + ball.radius >= screenWidth) {
+            scoreP1 ++; 
+            scoreLinePosX = screenWidth;
+            resetBallPos();
+        }
+
+        if(scoreP1 == 10 || scoreP2 == 10){
+            currentScreen = ENDING;
+        }
     }
 
 }
@@ -358,24 +360,24 @@ void resetBallPos(){
 void DrawGame(){
     BeginDrawing();
         ClearBackground(BLACK);
+        //Draw players
+        DrawRectangleV(player1.position, player1.size, player1.color);
+        DrawRectangleV(player2.position, player2.size, player2.color);
+        
+        //Draw ball
+        DrawCircleV(ball.position, ball.radius, ball.color);
+        
+        //Draw score
+        int scoreTextWidth = MeasureText(TextFormat("%i - %i", scoreP1, scoreP2), 40);
+        DrawText(TextFormat("%i - %i", scoreP1, scoreP2), screenWidth/2 - scoreTextWidth/2, 10, 40, WHITE);
+        
         if(pause){
-            
+            DrawText("PAUSED", screenWidth/2 - pausedTextWidth/2, screenHeight/2 - 20, 40, WHITE);
         }
         else{
-            //Draw players
-            DrawRectangleV(player1.position, player1.size, player1.color);
-            DrawRectangleV(player2.position, player2.size, player2.color);
-
-            //Draw ball
-            DrawCircleV(ball.position, ball.radius, ball.color);
-
-            //Draw score
-            int scoreTextWidth = MeasureText(TextFormat("%i - %i", scoreP1, scoreP2), 40);
-            DrawText(TextFormat("%i - %i", scoreP1, scoreP2), screenWidth/2 - scoreTextWidth/2, 10, 40, WHITE);
-        }
-
-        if(scoreTimer > 0) {
             scoreTimer--;
+        }
+        if(scoreTimer > 0) {
             DrawLineEx((Vector2){scoreLinePosX, 0}, (Vector2){scoreLinePosX, screenHeight}, 10.0, RED);
         }
     EndDrawing();
