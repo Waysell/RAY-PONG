@@ -2,6 +2,13 @@
 
 A lightweight, 2D implementation of the classic Pong game, built from scratch in **C** using the **Raylib** library
 
+
+<p align="center">
+  <video src="/assets/gameplay.gif" autoplay loop muted width="800"></video>
+</p>
+
+
+
 ## Features
 *   **Game Modes:** Play against a friend (2-player) or challenge the AI (1-player)
 *   **Menu System:** Intuitive main menu to select game modes.
@@ -34,3 +41,16 @@ This project includes a `Makefile` for easy compilation.
    ```bash
    make clean
    ```
+
+
+   ## 📸 Screenshots
+
+
+### Logo Screen
+![Ray-Pong Logo Screen](assets/00-LogoScreen.png)
+
+### Main Menu
+![Ray-Pong Main Menu](assets/01-TitleScreen.png)
+
+### Game Over Screen
+![Ray-Pong Game Over](assets/03-EndingScreen.png)
