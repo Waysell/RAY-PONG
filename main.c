@@ -181,8 +181,8 @@ void InitGame(){
 
     
 
-    scoreP1 = 9;
-    scoreP2 = 9;
+    scoreP1 = 0;
+    scoreP2 = 0;
     pause = false;
     gameEnds = false;
 
